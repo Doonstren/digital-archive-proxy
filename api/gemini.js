@@ -45,11 +45,19 @@ export default async function handler(request, response) {
 
     const geminiData = await geminiResponse.json();
     
-    // Извлекаем чистый текстовый ответ из сложной структуры Gemini
-    const textResponse = geminiData.candidates[0].content.parts[0].text;
+	const textResponse = geminiData.candidates[0].content.parts[0].text;
 
-    // Отправляем чистый текст обратно на сайт
-    return response.status(200).send(textResponse);
+	// Говорим браузеру, что отправляем JSON
+	response.setHeader('Content-Type', 'application/json');
+
+	// Пытаемся разобрать текст как JSON. Если не получается, отправляем как есть.
+	try {
+		JSON.parse(textResponse); // Проверяем, валидный ли это JSON
+		return response.status(200).send(textResponse); // Отправляем как JSON-строку
+	} catch (e) {
+		// Если это не JSON (обычный разговорный ответ), оборачиваем его в JSON
+		return response.status(200).json({ conversation: textResponse });
+	}
 
   } catch (error) {
     console.error('Proxy Error:', error);
