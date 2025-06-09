@@ -1,10 +1,9 @@
 export default async function handler(request, response) {
-  // Разрешаем запросы с любого источника (для GitHub Pages)
+
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  // Vercel автоматически обрабатывает preflight-запросы
   if (request.method === 'OPTIONS') {
     return response.status(200).end();
   }
@@ -24,7 +23,8 @@ export default async function handler(request, response) {
     return response.status(400).json({ error: 'Prompt is required' });
   }
   
-  const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`;
+  const modelName = 'gemini-2.5-flash-preview-05-20';
+  const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiApiKey}`;
 
   try {
     const geminiResponse = await fetch(geminiApiUrl, {
@@ -34,6 +34,9 @@ export default async function handler(request, response) {
       },
       body: JSON.stringify({
         contents: [{ parts: [{ text: userPrompt }] }],
+        "generationConfig": {
+          "responseMimeType": "application/json",
+        },
       }),
     });
 
@@ -45,22 +48,13 @@ export default async function handler(request, response) {
 
     const geminiData = await geminiResponse.json();
     
-	const textResponse = geminiData.candidates[0].content.parts[0].text;
+	  const textResponse = geminiData.candidates[0].content.parts[0].text;
 
-	// Говорим браузеру, что отправляем JSON
-	response.setHeader('Content-Type', 'application/json');
-
-	// Пытаемся разобрать текст как JSON. Если не получается, отправляем как есть.
-	try {
-		JSON.parse(textResponse); // Проверяем, валидный ли это JSON
-		return response.status(200).send(textResponse); // Отправляем как JSON-строку
-	} catch (e) {
-		// Если это не JSON (обычный разговорный ответ), оборачиваем его в JSON
-		return response.status(200).json({ conversation: textResponse });
-	}
+    response.setHeader('Content-Type', 'application/json');
+    return response.status(200).send(textResponse);
 
   } catch (error) {
     console.error('Proxy Error:', error);
-    return response.status(500).json({ error: error.message });
+    return response.status(500).json({ conversation: `Вибачте, сталася помилка: ${error.message}` });
   }
 }
