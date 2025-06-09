@@ -1,5 +1,4 @@
 export default async function handler(request, response) {
-
   response.setHeader('Access-Control-Allow-Origin', '*');
   response.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   response.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -18,8 +17,8 @@ export default async function handler(request, response) {
     return response.status(500).json({ error: 'API key is not configured' });
   }
 
-  const userPrompt = request.body.prompt;
-  if (!userPrompt) {
+  const { prompt, history } = request.body;
+  if (!prompt) {
     return response.status(400).json({ error: 'Prompt is required' });
   }
   
@@ -33,9 +32,9 @@ export default async function handler(request, response) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: userPrompt }] }],
-        "generationConfig": {
-          "responseMimeType": "application/json",
+        contents: [...history, { parts: [{ text: prompt }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
         },
       }),
     });
