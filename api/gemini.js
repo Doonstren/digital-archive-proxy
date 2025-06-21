@@ -22,7 +22,7 @@ export default async function handler(request, response) {
     return response.status(400).json({ error: 'History is required and must be an array' });
   }
   
-  const modelName = 'gemini-2.5-flash-preview-05-20';
+  const modelName = 'gemini-2.5-flash';
   const geminiApiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiApiKey}`;
 
   try {
